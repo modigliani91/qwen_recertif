@@ -1,7 +1,9 @@
 # ==========================================================================
 # Dépendances du pipeline d'extraction KYC (pipeline_extraction_kyc.ipynb)
-# Installer dans cet ordre si vous constituez un environnement Domino dédié
-# (le notebook installe lui-même ces mêmes versions via des cellules %pip).
+#
+# ATTENTION : ne PAS installer `torch` depuis ce fichier. L'environnement
+# Domino DWS-GPU fournit déjà une build de PyTorch alignée sur son pilote et
+# sa version de CUDA ; la réinstaller casserait l'environnement.
 # ==========================================================================
 
 # --- 1) Traitement PDF et image -------------------------------------------
@@ -11,8 +13,8 @@ opencv-python-headless==4.10.0.84
 numpy==1.26.4
 
 # --- 2) Détection d'orientation des scans (OSD) ----------------------------
-# Nécessite EN PLUS le binaire système `tesseract-ocr` (ex. apt-get install
-# tesseract-ocr). Ce paquet Python ne suffit pas seul.
+# Nécessite EN PLUS le binaire système `tesseract-ocr`
+# (ex. apt-get install tesseract-ocr). Ce paquet Python ne suffit pas seul.
 pytesseract==0.3.13
 
 # --- 3) Rapports et structuration des résultats -----------------------------
@@ -20,14 +22,15 @@ pandas==2.2.3
 openpyxl==3.1.5
 tqdm==4.66.5
 
-# --- 4) Moteur d'inférence du modèle Qwen (vision-langage, checkpoint FP8) --
-# vLLM installe automatiquement une version de PyTorch compatible avec sa
-# propre build CUDA : ne pas fixer `torch` séparément dans ce fichier, au
-# risque de provoquer un conflit de résolution de dépendances.
-vllm>=0.11.0
-
-# transformers est une dépendance de vLLM ; on impose ce plancher pour
-# garantir la reconnaissance de l'architecture Qwen3-VL (support ajouté en
-# 4.57.0). Si votre checkpoint est une autre variante de Qwen-VL plus
-# ancienne, cette contrainte reste compatible.
+# --- 4) Inférence du modèle Qwen vision-langage -----------------------------
+# transformers >= 4.57.0 : reconnaissance des architectures Qwen3-VL.
+# accelerate : requis par device_map="auto" (répartition multi-GPU).
 transformers>=4.57.0
+accelerate>=1.2.0
+
+# --- 5) Kernel FP8 fine-grained ---------------------------------------------
+# Plage de versions imposée par transformers (cf. KERNELS_MIN_VERSION /
+# KERNELS_MAX_VERSION) : hors de cette plage, transformers refuse le kernel.
+# Le kernel lui-même n'est pas téléchargé : il est lu depuis la copie locale
+# ModelHub via la variable d'environnement LOCAL_KERNELS (voir notebook, §3).
+kernels>=0.16.0,<0.17.0
